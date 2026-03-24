@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
 
-const socket = io("https://week4-day4chatapp.vercel.app");
+const socket = io("http://localhost:5000");
 
 export default socket;
