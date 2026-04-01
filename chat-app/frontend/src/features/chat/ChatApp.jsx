@@ -112,11 +112,17 @@ function JoinScreen({ onJoin }) {
 
 export default function ChatApp() {
   const dispatch = useDispatch();
-  const [username, setUsername] = useState(null);
+  const [username, setUsername] = useState(() => localStorage.getItem("fluxchat_username") || null);
   const [text, setText] = useState("");
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   const bottomRef = useRef(null);
   const typingTimeout = useRef(null);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
 
   const { data: history = [] } = useGetMessagesQuery();
   const liveMessages = useSelector((s) => s.chat.liveMessages);
@@ -169,18 +175,29 @@ export default function ChatApp() {
     setText("");
   };
 
-  if (!username) return <JoinScreen onJoin={setUsername} />;
+  if (!username) return <JoinScreen onJoin={(name) => { localStorage.setItem("fluxchat_username", name); setUsername(name); }} />;
 
   return (
     <div className="app-shell">
       <div className="noise" />
 
-      <aside className="sidebar">
+      {/* Sidebar overlay backdrop (mobile) */}
+      {sidebarOpen && (
+        <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
         <div className="sidebar-header">
           <div className="logo">
             <span className="logo-icon">⚡</span>
             <span className="logo-text">FluxChat</span>
           </div>
+          {/* Close button inside sidebar on mobile */}
+          <button className="sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
         </div>
 
         <div className="identity-section">
@@ -225,6 +242,12 @@ export default function ChatApp() {
       <main className="chat-panel">
         <header className="chat-header">
           <div className="channel-info">
+            {/* Hamburger — visible on mobile only */}
+            <button className="hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open sidebar">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
             <span className="channel-hash">#</span>
             <span className="channel-name">general</span>
             <span className="channel-dot" />
@@ -233,6 +256,10 @@ export default function ChatApp() {
           <div className="header-actions">
             <div className="tech-badge">RTK Query</div>
             <div className="tech-badge socket">Socket.IO</div>
+            {/* Theme toggle */}
+            <button className="theme-toggle" onClick={() => setDarkMode((d) => !d)} aria-label="Toggle theme">
+              {darkMode ? "☀️" : "🌙"}
+            </button>
           </div>
         </header>
 
